@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a1128" />
+  <meta name="description" content="Felix — voice-controlled calling. Speak one command to open your phone's dialer." />
+  <title>Felix — Your voice. One command.</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 48 48" width="44" height="44" role="img">
+          <rect x="2" y="2" width="44" height="44" rx="13" fill="#12224d"/>
+          <rect x="20" y="9" width="8" height="18" rx="4" fill="#5b8cff"/>
+          <path d="M15 20a9 9 0 0 0 18 0" fill="none" stroke="#5b8cff" stroke-width="2.6" stroke-linecap="round"/>
+          <line x1="24" y1="31" x2="24" y2="37" stroke="#5b8cff" stroke-width="2.6" stroke-linecap="round"/>
+          <line x1="19" y1="37.5" x2="29" y2="37.5" stroke="#5b8cff" stroke-width="2.6" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h1 class="brand">Felix</h1>
+      <p class="tagline">Your voice. One command.</p>
+      <p class="lede">Tap Activate, say <strong>“Call Yash”</strong>, and Felix opens your phone’s dialer with the right number.</p>
+    </header>
+
+    <section class="card voice-card" aria-label="Voice activation">
+      <button id="activateBtn" class="btn-primary" type="button">
+        <span class="mic" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18"><rect x="9" y="2" width="6" height="11" rx="3" fill="currentColor"/><path d="M5 11a7 7 0 0 0 14 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="18" x2="12" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </span>
+        <span class="btn-label">Activate Felix</span>
+        <span class="pulse" aria-hidden="true"></span>
+      </button>
+      <button id="stopBtn" class="btn-secondary" type="button" hidden>Stop listening</button>
+
+      <div class="status-row">
+        <span class="status-dot" aria-hidden="true"></span>
+        <p id="status" class="status" role="status" aria-live="polite">Ready when you are.</p>
+      </div>
+      <p id="heard" class="heard" role="status" aria-live="polite" hidden></p>
+      <div id="result" class="result" hidden></div>
+    </section>
+
+    <section class="card" aria-label="Contacts">
+      <div class="card-head">
+        <h2>Contacts</h2>
+        <p id="contactCount" class="muted">No contacts configured yet.</p>
+      </div>
+      <p id="setupHint" class="hint">Set up at least one contact before activating Felix.</p>
+      <p id="contactSupport" class="muted small"></p>
+      <div class="row">
+        <button id="pickContactsBtn" class="btn-secondary" type="button">Pick from phone</button>
+        <button id="clearContactsBtn" class="btn-ghost" type="button">Clear all</button>
+      </div>
+
+      <ul id="contactList" class="contact-list"></ul>
+
+      <div class="manual">
+        <h3>Add a test contact</h3>
+        <label class="field">
+          <span>Name</span>
+          <input id="manualName" type="text" placeholder="e.g. Yash" autocomplete="off" maxlength="60" />
+        </label>
+        <label class="field">
+          <span>Phone</span>
+          <input id="manualPhone" type="tel" placeholder="e.g. +911234567890" autocomplete="off" inputmode="tel" maxlength="20" />
+        </label>
+        <button id="manualAddBtn" class="btn-secondary" type="button">Add contact</button>
+        <p id="manualMsg" class="form-msg" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section class="card" aria-label="Type a command">
+      <h2>Try without voice</h2>
+      <p class="muted small">Used automatically if speech recognition isn't supported. Also handy for quiet testing.</p>
+      <form id="textForm" class="row">
+        <input id="textCommand" type="text" placeholder="Type: Call Yash" autocomplete="off" maxlength="120" aria-label="Type a call command" />
+        <button id="textGoBtn" class="btn-secondary" type="submit">Go</button>
+      </form>
+    </section>
+
+    <footer class="foot">
+      <p>Contacts stay in this tab's memory only — nothing is uploaded. Microphone is used only after you tap Activate.</p>
+      <p class="muted small">Voice needs Chrome on Android + HTTPS + mic permission. The dialer may still ask you to tap Call.</p>
+    </footer>
+  </main>
+
+  <script src="logic.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
