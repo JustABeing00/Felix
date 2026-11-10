@@ -345,8 +345,8 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:text="Say “Felix” to call without touching your phone. Everything stays on this device."
+                    android:layout_marginTop="10dp"
+                    android:text="Say “Felix”, pause for the beep, then say “Call [name]”."
                     android:textSize="13sp"
                     android:textColor="@color/felix_text_secondary"
                     android:lineSpacingMultiplier="1.4" />
@@ -401,7 +401,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
+                    android:layout_marginTop="16dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical">
 
@@ -409,7 +409,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginEnd="12dp"
+                        android:layout_marginEnd="16dp"
                         android:orientation="vertical">
 
                         <TextView
@@ -424,16 +424,17 @@
                             android:id="@+id/autoCallHint"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
+                            android:layout_marginTop="3dp"
                             android:textSize="13sp"
-                            android:textColor="@color/felix_text_secondary"
-                            android:lineSpacingMultiplier="1.4" />
+                            android:textColor="@color/felix_text_hint"
+                            android:lineSpacingMultiplier="1.35" />
                     </LinearLayout>
 
                     <androidx.appcompat.widget.SwitchCompat
                         android:id="@+id/autoCallSwitch"
                         android:layout_width="wrap_content"
                         android:layout_height="48dp"
+                        android:layout_gravity="center_vertical"
                         android:minWidth="56dp"
                         android:text=""
                         android:contentDescription="Automatic calling" />
@@ -443,7 +444,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
+                    android:layout_marginTop="16dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical">
 
@@ -451,7 +452,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginEnd="12dp"
+                        android:layout_marginEnd="16dp"
                         android:orientation="vertical">
 
                         <TextView
@@ -466,16 +467,17 @@
                             android:id="@+id/soundMatchHint"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
+                            android:layout_marginTop="3dp"
                             android:textSize="13sp"
-                            android:textColor="@color/felix_text_secondary"
-                            android:lineSpacingMultiplier="1.4" />
+                            android:textColor="@color/felix_text_hint"
+                            android:lineSpacingMultiplier="1.35" />
                     </LinearLayout>
 
                     <androidx.appcompat.widget.SwitchCompat
                         android:id="@+id/soundMatchSwitch"
                         android:layout_width="wrap_content"
                         android:layout_height="48dp"
+                        android:layout_gravity="center_vertical"
                         android:minWidth="56dp"
                         android:text=""
                         android:contentDescription="Match names that sound alike" />
@@ -485,9 +487,12 @@
                     android:id="@+id/handsFreeSetupText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
+                    android:layout_marginTop="12dp"
                     android:background="@drawable/bg_info_box"
-                    android:padding="12dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp"
                     android:textSize="12sp"
                     android:textColor="@color/felix_text_secondary"
                     android:lineSpacingMultiplier="1.45" />

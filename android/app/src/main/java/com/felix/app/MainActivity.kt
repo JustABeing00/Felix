@@ -618,18 +618,17 @@ class MainActivity : AppCompatActivity() {
 
     private fun refreshSoundHint() {
         soundMatchHint.text = if (settings.soundMatchingEnabled) {
-            "On: names that sound alike count as the same contact, e.g. Satwinder finds Satvinder. " +
-                "Two saved contacts that sound alike still ask you to choose."
+            "Similar names can match (e.g. John / Jon). Felix asks you to choose if needed."
         } else {
-            "Off: only exact name matches count."
+            "Only exact name matches are used."
         }
     }
 
     private fun refreshAutoCallHint() {
         autoCallHint.text = if (settings.autoCallEnabled) {
-            "On: after “Felix” and a call command for one matching contact with one number, Felix places the call itself."
+            "Calls when one contact and number match."
         } else {
-            "Off: Felix shows the contact and a notification with a dial button. It never calls by itself."
+            "Tap the notification to open the dialer."
         }
     }
 
@@ -658,7 +657,7 @@ class MainActivity : AppCompatActivity() {
     private fun refreshSetupText() {
         val report = HandsFreeSetup.check(this)
         handsFreeSetupText.text = if (report.ready) {
-            "Setup OK: the offline wake-word model is bundled and speech recognition is available."
+            "Ready for hands-free."
         } else {
             report.problems().joinToString("\n\n")
         }
