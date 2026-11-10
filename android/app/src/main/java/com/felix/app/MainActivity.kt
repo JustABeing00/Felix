@@ -21,6 +21,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -67,6 +68,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var soundMatchHint: TextView
     private lateinit var handsFreeSetupText: TextView
     private lateinit var troubleshootButton: Button
+    private lateinit var scrollView: ScrollView
 
     // Premium visual-only views (decorative, no logic change).
     private lateinit var voiceStateDot: View
@@ -184,6 +186,7 @@ class MainActivity : AppCompatActivity() {
         soundMatchHint = findViewById(R.id.soundMatchHint)
         handsFreeSetupText = findViewById(R.id.handsFreeSetupText)
         troubleshootButton = findViewById(R.id.troubleshootButton)
+        scrollView = findViewById(R.id.scrollView)
         voiceStateDot = findViewById(R.id.voiceStateDot)
         voiceStateLabel = findViewById(R.id.voiceStateLabel)
         voiceHintText = findViewById(R.id.voiceHintText)
@@ -920,7 +923,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun animateResultIn() {
-        if (!animatorsEnabled()) return
+        if (!animatorsEnabled()) {
+            scrollView.scrollTo(0, 0)
+            return
+        }
+        scrollView.smoothScrollTo(0, 0)
         resultBox.alpha = 0f
         resultBox.translationY = dp(10).toFloat()
         resultBox.animate()
