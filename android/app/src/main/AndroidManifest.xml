@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Microphone: one-tap voice and the hands-free wake word. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Contacts: name and number lookup, read on the phone only. -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <!-- Phone: places calls only after automatic calling is enabled and acknowledged. -->
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+    <!-- Hands-free mode runs as a visible foreground service with the microphone type. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <!-- Android 13+: shows the listening notification and its Stop action. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Keeps the CPU running while listening with the screen off. Released when listening stops. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- Calls need telephony, but the app should still install on devices without it. -->
+    <uses-feature
+        android:name="android.hardware.telephony"
+        android:required="false" />
+
+    <!-- Android 11+ hides other apps' services by default. Without this, speech recognition reports unavailable. -->
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+    </queries>
+
+    <application
+        android:label="Felix"
+        android:theme="@style/Theme.Felix"
+        android:allowBackup="false">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".FelixListeningService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
+
+    </application>
+</manifest>

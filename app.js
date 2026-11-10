@@ -1,9 +1,5 @@
 "use strict";
 
-/* Felix MVP — UI wiring. Vanilla JS, no dependencies.
- * Contacts stay in memory only. No analytics, no network calls.
- */
-
 (function () {
   const L = window.FelixLogic;
   const $ = (id) => document.getElementById(id);
@@ -297,7 +293,7 @@
     wrap.appendChild(el("p", "result-title", "Found " + contact.name + "."));
     wrap.appendChild(el("p", "result-sub", phone));
     wrap.appendChild(el("p", "result-note",
-      "Opening your phone app… If nothing happens, use the button below. You may still need to tap Call in your dialer."));
+      "Tap the green button to open your phone app. Your dialer may still ask you to confirm the call."));
 
     const callBtn = document.createElement("a");
     callBtn.className = "btn-call";
@@ -312,15 +308,41 @@
     wrap.appendChild(again);
 
     showResult(wrap);
-    setStatus("Opening your phone app…");
+    setStatus("Found " + contact.name + ". Opening your phone app…");
 
-    // Attempt automatic handoff once. Keep details + button visible regardless,
-    // because browsers may block it or just open the dialer.
+    // Attempt one automatic handoff. Chrome on Android only allows tel:
+    // navigation while the user's tap gesture is still fresh ("transient
+    // activation", a few seconds). Voice results arrive after it expires,
+    // so the browser silently blocks this ("Navigation is blocked: tel:…"
+    // in the console) — the green button below always works because tapping
+    // it IS a fresh gesture. Never retry in a loop.
+    let leftPage = false;
+    const onHide = () => { leftPage = true; };
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", onHide);
     try {
-      window.location.href = telUrl;
+      const auto = document.createElement("a");
+      auto.href = telUrl;
+      document.body.appendChild(auto);
+      auto.click();
+      auto.remove();
     } catch (e) {
-      setStatus("Couldn't open the phone app automatically. Tap “Call " + contact.name + "” below.");
+      // Fall through to the manual button.
     }
+    setTimeout(() => {
+      document.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("pagehide", onHide);
+      // If we're still here and the button is still on screen, the automatic
+      // handoff was blocked (or there is no dialer, e.g. desktop). Say so
+      // plainly and point at the button instead of staying on "Opening…".
+      if (!leftPage && !document.hidden && callBtn.isConnected) {
+        setStatus("Tap “Call " + contact.name + "” below to open your dialer.");
+        callBtn.classList.add("btn-attn");
+        try {
+          callBtn.scrollIntoView({ block: "nearest" });
+        } catch (e) {}
+      }
+    }, 1500);
   }
 
   // ---------- Speech recognition ----------

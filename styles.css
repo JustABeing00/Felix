@@ -149,6 +149,12 @@ body.is-listening .status-dot { background: #ff5d5d; animation: blink 1s ease-in
   margin-bottom: 10px;
 }
 .btn-call:hover { filter: brightness(1.05); }
+.btn-attn {
+  animation: attn 1s ease-in-out 2;
+  outline: 3px solid rgba(255, 255, 255, 0.7);
+  outline-offset: 2px;
+}
+@keyframes attn { 50% { transform: scale(1.03); } }
 .result-block .btn-secondary { width: 100%; }
 
 .choice-row { display: flex; flex-direction: column; gap: 8px; margin: 6px 0 10px; }

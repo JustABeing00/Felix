@@ -1,0 +1,10 @@
+# Gradle / Android Studio: local only, never commit
+.gradle/
+build/
+app/build/
+local.properties
+*.iml
+.idea/
+*.apk
+# Offline speech model (about 54 MB unpacked). Re-download per README step 1.
+app/src/main/assets/vosk-model-*/

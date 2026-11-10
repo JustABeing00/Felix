@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@color/felix_bg">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/app_name"
+            android:textSize="34sp"
+            android:textStyle="bold"
+            android:textColor="@color/felix_ink" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="Your voice. One command."
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/felix_accent" />
+
+        <TextView
+            android:id="@+id/contactInfoText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="8dp"
+            android:text="Loading contacts…"
+            android:textSize="14sp"
+            android:textColor="@color/felix_muted" />
+
+        <Button
+            android:id="@+id/activateButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:minHeight="60dp"
+            android:text="Activate Felix" />
+
+        <Button
+            android:id="@+id/stopButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Stop listening"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/statusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Ready when you are."
+            android:textSize="16sp"
+            android:textColor="@color/felix_ink" />
+
+        <TextView
+            android:id="@+id/heardText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textSize="15sp"
+            android:textStyle="italic"
+            android:textColor="@color/felix_muted"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/resultBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="vertical"
+            android:visibility="gone" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:text="Hands-free mode (experimental)"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="@color/felix_ink" />
+
+        <TextView
+            android:id="@+id/handsFreeStatusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Hands-free mode is off."
+            android:textSize="15sp"
+            android:textColor="@color/felix_ink" />
+
+        <Button
+            android:id="@+id/handsFreeToggleButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Activate Hands-Free Mode" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/autoCallSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="Allow automatic calling"
+            android:textColor="@color/felix_ink" />
+
+        <TextView
+            android:id="@+id/autoCallHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="13sp"
+            android:textColor="@color/felix_muted" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/soundMatchSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="Match names that sound alike"
+            android:textColor="@color/felix_ink" />
+
+        <TextView
+            android:id="@+id/soundMatchHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="13sp"
+            android:textColor="@color/felix_muted" />
+
+        <TextView
+            android:id="@+id/handsFreeSetupText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:textSize="13sp"
+            android:textColor="@color/felix_muted" />
+
+        <Button
+            android:id="@+id/troubleshootButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Troubleshooting" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Try without voice"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="@color/felix_ink" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/typeCommandText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Type: Call Yash"
+                android:inputType="text"
+                android:maxLength="120"
+                android:textColor="@color/felix_ink"
+                android:textColorHint="@color/felix_muted" />
+
+            <Button
+                android:id="@+id/typeGoButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Go" />
+
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Contacts stay on this device. Nothing is uploaded. The microphone runs only while Felix is listening, and the listening notification always shows."
+            android:textSize="12sp"
+            android:textColor="@color/felix_muted" />
+
+    </LinearLayout>
+</ScrollView>

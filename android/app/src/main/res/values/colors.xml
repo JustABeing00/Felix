@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="felix_bg">#070D1F</color>
+    <color name="felix_ink">#EEF2FF</color>
+    <color name="felix_muted">#9AA7CC</color>
+    <color name="felix_accent">#5B8CFF</color>
+</resources>
