@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Stylized Felix F -->
+    <path android:fillColor="#F4F6FC"
+        android:pathData="M30,30h28v8H40v10h18v8H40v22H30V30z" />
+    <!-- Waveform -->
+    <path android:fillColor="#7890FF"
+        android:pathData="M64,40h6v28h-6z" />
+    <path android:fillColor="#7890FF" android:fillAlpha="0.7"
+        android:pathData="M73,33h5v42h-5z" />
+    <path android:fillColor="#7890FF" android:fillAlpha="0.45"
+        android:pathData="M81,44h4v20h-4z" />
+</vector>

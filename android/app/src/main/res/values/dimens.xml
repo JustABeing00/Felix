@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Spacing system (4dp base) -->
+    <dimen name="felix_space_2">2dp</dimen>
+    <dimen name="felix_space_4">4dp</dimen>
+    <dimen name="felix_space_8">8dp</dimen>
+    <dimen name="felix_space_12">12dp</dimen>
+    <dimen name="felix_space_16">16dp</dimen>
+    <dimen name="felix_space_20">20dp</dimen>
+    <dimen name="felix_space_24">24dp</dimen>
+    <dimen name="felix_space_32">32dp</dimen>
+
+    <!-- Corner radii -->
+    <dimen name="felix_radius_s">12dp</dimen>
+    <dimen name="felix_radius_m">16dp</dimen>
+    <dimen name="felix_radius_l">20dp</dimen>
+    <dimen name="felix_radius_xl">24dp</dimen>
+    <dimen name="felix_radius_pill">28dp</dimen>
+
+    <!-- Component sizes -->
+    <dimen name="felix_logo_size">46dp</dimen>
+    <dimen name="felix_logo_radius">15dp</dimen>
+    <dimen name="felix_orb_size">168dp</dimen>
+    <dimen name="felix_orb_core">96dp</dimen>
+    <dimen name="felix_button_height">56dp</dimen>
+    <dimen name="felix_input_height">56dp</dimen>
+    <dimen name="felix_card_stroke">1dp</dimen>
+
+    <!-- Type scale -->
+    <dimen name="felix_text_hero">22sp</dimen>
+    <dimen name="felix_text_title">16sp</dimen>
+    <dimen name="felix_text_body">15sp</dimen>
+    <dimen name="felix_text_small">13sp</dimen>
+    <dimen name="felix_text_caption">12sp</dimen>
+</resources>

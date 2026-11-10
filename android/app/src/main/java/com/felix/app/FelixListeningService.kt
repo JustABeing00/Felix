@@ -359,6 +359,8 @@ class FelixListeningService : Service() {
                 finishCycle("I didn't hear a command.")
             SpeechRecognizer.ERROR_NETWORK, SpeechRecognizer.ERROR_NETWORK_TIMEOUT, SpeechRecognizer.ERROR_SERVER ->
                 finishCycle("The speech service is unreachable. Check internet or the Google app.")
+            12, 13 ->
+                finishCycle("Speech language (en-IN) isn't available on this device. Check the Google app's voice settings.")
             SpeechRecognizer.ERROR_RECOGNIZER_BUSY ->
                 finishCycle("The speech recognizer is busy.")
             SpeechRecognizer.ERROR_AUDIO ->

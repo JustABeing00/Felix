@@ -27,3 +27,6 @@ local.properties
 # Secrets
 .env
 .env.local
+
+# Local session notes (never commit)
+progress.md

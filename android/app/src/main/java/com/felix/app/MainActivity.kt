@@ -1,25 +1,33 @@
 package com.felix.app
 
 import android.Manifest
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Typeface
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import android.util.TypedValue
 import android.view.View
+import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.ContextCompat
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 /**
  * Felix main screen.
@@ -59,6 +67,19 @@ class MainActivity : AppCompatActivity() {
     private lateinit var soundMatchHint: TextView
     private lateinit var handsFreeSetupText: TextView
     private lateinit var troubleshootButton: Button
+
+    // Premium visual-only views (decorative, no logic change).
+    private lateinit var voiceStateDot: View
+    private lateinit var voiceStateLabel: TextView
+    private lateinit var voiceHintText: TextView
+    private lateinit var voiceHaloOuter: View
+    private lateinit var voiceHaloInner: View
+    private lateinit var voiceOrbCore: View
+    private lateinit var voiceOrbIcon: ImageView
+    private lateinit var handsFreeDot: View
+    private lateinit var contactDot: View
+
+    private var pulseSet: AnimatorSet? = null
 
     private lateinit var settings: FelixSettings
     private var contacts: List<FelixContact> = emptyList()
@@ -141,6 +162,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        stopPulse()
         stopRecognizer()
         super.onDestroy()
     }
@@ -162,6 +184,15 @@ class MainActivity : AppCompatActivity() {
         soundMatchHint = findViewById(R.id.soundMatchHint)
         handsFreeSetupText = findViewById(R.id.handsFreeSetupText)
         troubleshootButton = findViewById(R.id.troubleshootButton)
+        voiceStateDot = findViewById(R.id.voiceStateDot)
+        voiceStateLabel = findViewById(R.id.voiceStateLabel)
+        voiceHintText = findViewById(R.id.voiceHintText)
+        voiceHaloOuter = findViewById(R.id.voiceHaloOuter)
+        voiceHaloInner = findViewById(R.id.voiceHaloInner)
+        voiceOrbCore = findViewById(R.id.voiceOrbCore)
+        voiceOrbIcon = findViewById(R.id.voiceOrbIcon)
+        handsFreeDot = findViewById(R.id.handsFreeDot)
+        contactDot = findViewById(R.id.contactDot)
     }
 
     private fun wireListeners() {
@@ -173,6 +204,14 @@ class MainActivity : AppCompatActivity() {
                 setStatus("Type a command first, e.g. “Call Yash”.")
             } else {
                 handleCommand(typed)
+            }
+        }
+        typeCommandText.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_GO || actionId == EditorInfo.IME_ACTION_DONE) {
+                typeGoButton.performClick()
+                true
+            } else {
+                false
             }
         }
         handsFreeToggleButton.setOnClickListener { onHandsFreeToggle() }
@@ -192,10 +231,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun loadContacts() {
         contacts = ContactsRepository.load(this)
-        contactInfoText.text = if (contacts.isEmpty()) {
-            "No contacts with phone numbers available. Grant contacts access."
+        if (contacts.isEmpty()) {
+            contactInfoText.text = "No contacts"
+            contactDot.setBackgroundResource(R.drawable.dot_warning)
         } else {
-            "${contacts.size} contact(s) ready."
+            contactInfoText.text = if (contacts.size == 1) "1 ready" else "${contacts.size} ready"
+            contactDot.setBackgroundResource(R.drawable.dot_success)
         }
         setStatus(
             if (contacts.isEmpty()) "No contacts available. Grant access, then try again."
@@ -249,10 +290,12 @@ class MainActivity : AppCompatActivity() {
                         SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "I didn't catch that. Try again."
                         SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Microphone access was denied."
                         SpeechRecognizer.ERROR_AUDIO -> "No microphone found."
+                        SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "Speech recognizer is busy. Stop hands-free mode first, then try again."
                         SpeechRecognizer.ERROR_NETWORK,
                         SpeechRecognizer.ERROR_NETWORK_TIMEOUT,
                         SpeechRecognizer.ERROR_SERVER -> "Recognition service failed (network). Try again."
-                        else -> "Recognition failed. Try again."
+                        12, 13 -> "Speech language (en-IN) isn't available on this device. Check the Google app's voice settings."
+                        else -> "Recognition failed (code $error). Try again."
                     }
                 )
             }
@@ -308,7 +351,34 @@ class MainActivity : AppCompatActivity() {
         listening = on
         activateButton.isEnabled = !on
         activateButton.text = if (on) "Listening…" else "Activate Felix"
+        (activateButton as? MaterialButton)?.apply {
+            if (on) {
+                setIconResource(R.drawable.ic_mic_dark)
+            } else {
+                setIconResource(R.drawable.ic_mic_dark)
+            }
+            alpha = if (on) 0.65f else 1f
+        }
         stopButton.visibility = if (on) View.VISIBLE else View.GONE
+        // Voice orb + state chip — visual only.
+        if (on) {
+            voiceStateLabel.text = "Listening"
+            voiceStateDot.setBackgroundResource(R.drawable.dot_accent)
+            voiceHintText.text = "Speak now — “Call …”"
+            voiceOrbIcon.setImageResource(R.drawable.ic_mic)
+            voiceOrbCore.setBackgroundResource(R.drawable.bg_orb_button)
+            voiceOrbIcon.setColorFilter(ContextCompat.getColor(this, R.color.felix_on_accent))
+            startPulse()
+            stopButton.announceForAccessibility("Listening. Tap Stop listening to cancel.")
+        } else {
+            voiceStateLabel.text = "Ready"
+            voiceStateDot.setBackgroundResource(R.drawable.dot_success)
+            voiceHintText.text = "Tap Activate Felix, then say “Call …”"
+            voiceOrbIcon.setImageResource(R.drawable.ic_mic)
+            voiceOrbCore.setBackgroundResource(R.drawable.bg_orb_core)
+            voiceOrbIcon.setColorFilter(ContextCompat.getColor(this, R.color.felix_text_primary))
+            stopPulse()
+        }
     }
 
     // ---------------- Command → contact → call ----------------
@@ -320,6 +390,11 @@ class MainActivity : AppCompatActivity() {
                 heardText.text = "I heard: “$trimmed”"
                 heardText.visibility = View.VISIBLE
                 setStatus(parsed.message)
+                showMessage(
+                    "Couldn't understand that.",
+                    parsed.message,
+                    ResultKind.ERROR
+                )
             }
             is ParseResult.Ok -> presentMatch(
                 trimmed,
@@ -357,12 +432,13 @@ class MainActivity : AppCompatActivity() {
                 setStatus("I couldn't find that contact.")
                 showMessage(
                     "No match for “${parsedName}”.",
-                    "Check the name and try again."
+                    "Check the name and try again.",
+                    ResultKind.ERROR
                 )
             }
             is MatchResult.Ambiguous -> {
                 setStatus("Multiple contacts matched. Please choose one.")
-                showResultTitle("Which “${parsedName}” did you mean?")
+                showResultTitle("Which “${parsedName}” did you mean?", ResultKind.CHOICE)
                 m.matches.forEach { c -> addChoiceButton(c.name) { resolveContact(c) } }
                 showResultNote("I never guess when several contacts match.")
             }
@@ -370,12 +446,13 @@ class MainActivity : AppCompatActivity() {
                 setStatus("${m.contact.name} has no valid phone number.")
                 showMessage(
                     "${m.contact.name} has no usable number.",
-                    "Fix the number in your contacts and try again."
+                    "Fix the number in your contacts and try again.",
+                    ResultKind.ERROR
                 )
             }
             is MatchResult.NeedChoice -> {
                 setStatus("Found ${m.contact.name}${FelixLogic.heardNote(parsedName, m.contact.name)}. Which number?")
-                showResultTitle("Found ${m.contact.name}.")
+                showResultTitle("Found ${m.contact.name}.", ResultKind.CHOICE)
                 showResultNote("Pick one. Felix remembers your choice for this contact.")
                 m.phones.forEach { p -> addChoiceButton(p) { rememberAndCall(m.contact, p) } }
             }
@@ -394,7 +471,7 @@ class MainActivity : AppCompatActivity() {
             phones.size == 1 -> requestCall(contact, phones[0])
             else -> {
                 setStatus("Found ${contact.name}. Which number?")
-                showResultTitle("Found ${contact.name}.")
+                showResultTitle("Found ${contact.name}.", ResultKind.CHOICE)
                 showResultNote("Pick one. Felix remembers your choice for this contact.")
                 phones.forEach { p -> addChoiceButton(p) { rememberAndCall(contact, p) } }
             }
@@ -429,7 +506,7 @@ class MainActivity : AppCompatActivity() {
         try {
             startActivity(Intent(Intent.ACTION_CALL, Uri.parse(uri)))
             setStatus("Calling ${contact.name}…")
-            showMessage("Calling ${contact.name}.", phone)
+            showMessage("Calling ${contact.name}.", phone, ResultKind.SUCCESS)
         } catch (e: SecurityException) {
             showDialFallback(contact, phone)
             setStatus("Couldn't place the call directly. Use the dial button below.")
@@ -441,21 +518,23 @@ class MainActivity : AppCompatActivity() {
     /** Fallback that needs no CALL_PHONE permission: opens the dialer pre-filled. */
     private fun showDialFallback(contact: FelixContact, phone: String) {
         val uri = FelixLogic.telUri(phone) ?: return
-        showResultTitle("Found ${contact.name}.")
+        showResultTitle("Found ${contact.name}.", ResultKind.NEUTRAL)
         showResultNote(phone)
-        val dial = Button(this).apply {
-            text = "Call ${contact.name} (open dialer)"
-            setOnClickListener {
-                try {
-                    startActivity(Intent(Intent.ACTION_DIAL, Uri.parse(uri)))
-                } catch (e: ActivityNotFoundException) {
-                    setStatus("No calling app found on this device.")
-                }
+        val dial = styledButton(
+            text = "Call ${contact.name} (open dialer)",
+            kind = ResultKind.NEUTRAL,
+            iconRes = R.drawable.ic_call
+        ) {
+            try {
+                startActivity(Intent(Intent.ACTION_DIAL, Uri.parse(uri)))
+            } catch (e: ActivityNotFoundException) {
+                setStatus("No calling app found on this device.")
             }
         }
         resultBox.addView(dial)
         addAskAgainButton()
         resultBox.visibility = View.VISIBLE
+        animateResultIn()
     }
 
     // ---------------- Hands-free mode ----------------
@@ -501,7 +580,7 @@ class MainActivity : AppCompatActivity() {
             requestCallPermissionForAutoCall()
             return
         }
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle("Allow automatic calling?")
             .setMessage(AUTO_CALL_ACKNOWLEDGEMENT)
             .setPositiveButton("I understand") { _, _ ->
@@ -553,8 +632,24 @@ class MainActivity : AppCompatActivity() {
 
     private fun renderHandsFree(state: HandsFreeUiState) {
         handsFreeStatusText.text = state.message
+        val running = HandsFreeStatus.serviceRunning
         handsFreeToggleButton.text =
-            if (HandsFreeStatus.serviceRunning) "Stop Listening" else "Activate Hands-Free Mode"
+            if (running) "Stop Listening" else "Activate Hands-Free Mode"
+        (handsFreeToggleButton as? MaterialButton)?.apply {
+            if (running) {
+                setIconResource(R.drawable.ic_stop)
+                iconTint = ContextCompat.getColorStateList(context, R.color.felix_error)
+            } else {
+                setIconResource(R.drawable.ic_handsfree)
+                iconTint = ContextCompat.getColorStateList(context, R.color.felix_accent)
+            }
+        }
+        handsFreeDot.setBackgroundResource(
+            if (running) R.drawable.dot_success else R.drawable.dot_muted
+        )
+        if (running) {
+            handsFreeToggleButton.announceForAccessibility("Hands-free listening is on")
+        }
     }
 
     private fun refreshSetupText() {
@@ -567,7 +662,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showSetupProblems(problems: List<String>) {
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle("Hands-free isn't ready yet")
             .setMessage(problems.joinToString("\n\n"))
             .setPositiveButton("OK", null)
@@ -596,7 +691,7 @@ class MainActivity : AppCompatActivity() {
                 "(Settings > Apps > Felix > Battery), and allow auto-start or background activity in your " +
                 "phone's battery or app-management settings. On ColorOS (Oppo A54) these menus have different names."
         )
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle("Hands-free troubleshooting")
             .setMessage(lines.joinToString("\n"))
             .setPositiveButton("OK", null)
@@ -605,7 +700,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun yesNo(value: Boolean): String = if (value) "yes" else "no"
 
-    // ---------------- Small UI helpers ----------------
+    // ---------------- Small UI helpers (styled, same behaviour) ----------------
+
+    private enum class ResultKind { SUCCESS, CHOICE, ERROR, NEUTRAL }
 
     private fun hasPermission(permission: String): Boolean =
         ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
@@ -617,43 +714,221 @@ class MainActivity : AppCompatActivity() {
     private fun clearResult() {
         resultBox.removeAllViews()
         resultBox.visibility = View.GONE
+        resultBox.background = null
+        resultBox.setPadding(0, 0, 0, 0)
     }
 
-    private fun showResultTitle(title: String) {
+    private fun styleResultBox(kind: ResultKind) {
+        val bg = when (kind) {
+            ResultKind.SUCCESS -> R.drawable.bg_result_success
+            ResultKind.CHOICE -> R.drawable.bg_result_choice
+            ResultKind.ERROR -> R.drawable.bg_result_error
+            ResultKind.NEUTRAL -> R.drawable.bg_result_neutral
+        }
+        resultBox.setBackgroundResource(bg)
+        val p = dp(14)
+        resultBox.setPadding(p, p, p, p)
+        val lp = resultBox.layoutParams as? LinearLayout.LayoutParams
+        if (lp != null && lp.topMargin != dp(12)) {
+            lp.topMargin = dp(12)
+            resultBox.layoutParams = lp
+        }
+        resultBox.visibility = View.VISIBLE
+        animateResultIn()
+    }
+
+    private fun showResultTitle(title: String, kind: ResultKind = ResultKind.NEUTRAL) {
         clearResult()
+        styleResultBox(kind)
         val t = TextView(this).apply {
             text = title
-            textSize = 17f
-            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+            setTypeface(typeface, Typeface.BOLD)
+            setTextColor(ContextCompat.getColor(context, R.color.felix_text_primary))
+            setLineSpacing(0f, 1.3f)
         }
         resultBox.addView(t)
         resultBox.visibility = View.VISIBLE
     }
 
     private fun showResultNote(note: String) {
-        val n = TextView(this).apply { text = note }
+        if (resultBox.visibility != View.VISIBLE) styleResultBox(ResultKind.NEUTRAL)
+        val n = TextView(this).apply {
+            text = note
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+            setTextColor(ContextCompat.getColor(context, R.color.felix_text_secondary))
+            setLineSpacing(0f, 1.4f)
+            val lp = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            lp.topMargin = dp(6)
+            layoutParams = lp
+        }
         resultBox.addView(n)
     }
 
     private fun addChoiceButton(label: String, onClick: () -> Unit) {
-        val b = Button(this).apply {
-            text = label
-            setOnClickListener { onClick() }
-        }
+        if (resultBox.visibility != View.VISIBLE) styleResultBox(ResultKind.CHOICE)
+        val isPhone = label.any { it.isDigit() }
+        val b = styledButton(
+            text = label,
+            kind = ResultKind.CHOICE,
+            iconRes = if (isPhone) R.drawable.ic_call else R.drawable.ic_person,
+            onClick = onClick
+        )
         resultBox.addView(b)
     }
 
     private fun addAskAgainButton() {
-        val again = Button(this).apply {
-            text = "Activate Felix again"
-            setOnClickListener { startListening() }
-        }
+        val again = styledButton(
+            text = "Activate Felix again",
+            kind = ResultKind.NEUTRAL,
+            iconRes = R.drawable.ic_mic,
+            secondary = true,
+            onClick = { startListening() }
+        )
         resultBox.addView(again)
     }
 
-    private fun showMessage(title: String, sub: String) {
-        showResultTitle(title)
+    private fun styledButton(
+        text: String,
+        kind: ResultKind,
+        iconRes: Int? = null,
+        secondary: Boolean = false,
+        onClick: () -> Unit
+    ): MaterialButton {
+        return MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+            this.text = text
+            isAllCaps = false
+            textSize = 15f
+            minimumHeight = dp(52)
+            minHeight = dp(52)
+            cornerRadius = dp(14)
+            iconGravity = MaterialButton.ICON_GRAVITY_TEXT_START
+            if (iconRes != null) {
+                setIconResource(iconRes)
+                iconSize = dp(20)
+            } else {
+                icon = null
+            }
+            val lp = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            lp.topMargin = dp(8)
+            layoutParams = lp
+            if (secondary) {
+                backgroundTintList = ContextCompat.getColorStateList(context, R.color.felix_surface_elevated)
+                strokeColor = ContextCompat.getColorStateList(context, R.color.felix_border)
+                setTextColor(ContextCompat.getColor(context, R.color.felix_text_primary))
+                iconTint = ContextCompat.getColorStateList(context, R.color.felix_accent)
+                rippleColor = ContextCompat.getColorStateList(context, R.color.felix_ripple)
+            } else if (kind == ResultKind.SUCCESS) {
+                backgroundTintList = ContextCompat.getColorStateList(context, R.color.felix_accent)
+                strokeWidth = 0
+                setTextColor(ContextCompat.getColor(context, R.color.felix_on_accent))
+                iconTint = ContextCompat.getColorStateList(context, R.color.felix_on_accent)
+            } else {
+                backgroundTintList = ContextCompat.getColorStateList(context, R.color.felix_surface_elevated)
+                strokeColor = ContextCompat.getColorStateList(context, R.color.felix_border)
+                strokeWidth = dp(1)
+                setTextColor(ContextCompat.getColor(context, R.color.felix_text_primary))
+                iconTint = ContextCompat.getColorStateList(context, R.color.felix_accent)
+                rippleColor = ContextCompat.getColorStateList(context, R.color.felix_ripple)
+            }
+            setOnClickListener { onClick() }
+        }
+    }
+
+    private fun showMessage(title: String, sub: String, kind: ResultKind = ResultKind.NEUTRAL) {
+        showResultTitle(title, kind)
         showResultNote(sub)
         addAskAgainButton()
     }
+
+    // ---------------- Visual polish: motion (lightweight, skips when reduced) ----------------
+
+    private fun animatorsEnabled(): Boolean {
+        return try {
+            ValueAnimator.areAnimatorsEnabled()
+        } catch (_: Throwable) {
+            true
+        }
+    }
+
+    private fun startPulse() {
+        stopPulse()
+        if (!animatorsEnabled()) return
+        voiceHaloOuter.visibility = View.VISIBLE
+        voiceHaloInner.visibility = View.VISIBLE
+        voiceHaloOuter.alpha = 0.9f
+        voiceHaloInner.alpha = 0.6f
+        voiceHaloOuter.scaleX = 1f
+        voiceHaloOuter.scaleY = 1f
+        voiceHaloInner.scaleX = 1f
+        voiceHaloInner.scaleY = 1f
+
+        val outerScaleX = ObjectAnimator.ofFloat(voiceHaloOuter, View.SCALE_X, 1f, 1.18f)
+        val outerScaleY = ObjectAnimator.ofFloat(voiceHaloOuter, View.SCALE_Y, 1f, 1.18f)
+        val outerFade = ObjectAnimator.ofFloat(voiceHaloOuter, View.ALPHA, 0.9f, 0.15f)
+        outerScaleX.duration = 1800; outerScaleY.duration = 1800; outerFade.duration = 1800
+        outerScaleX.repeatCount = ValueAnimator.INFINITE
+        outerScaleY.repeatCount = ValueAnimator.INFINITE
+        outerFade.repeatCount = ValueAnimator.INFINITE
+
+        val innerScaleX = ObjectAnimator.ofFloat(voiceHaloInner, View.SCALE_X, 1f, 1.14f)
+        val innerScaleY = ObjectAnimator.ofFloat(voiceHaloInner, View.SCALE_Y, 1f, 1.14f)
+        val innerFade = ObjectAnimator.ofFloat(voiceHaloInner, View.ALPHA, 0.6f, 0.1f)
+        innerScaleX.duration = 1800; innerScaleY.duration = 1800; innerFade.duration = 1800
+        innerScaleX.repeatCount = ValueAnimator.INFINITE
+        innerScaleY.repeatCount = ValueAnimator.INFINITE
+        innerFade.repeatCount = ValueAnimator.INFINITE
+        innerScaleX.startDelay = 450; innerScaleY.startDelay = 450; innerFade.startDelay = 450
+
+        val coreBreath = ObjectAnimator.ofFloat(voiceOrbCore, View.SCALE_X, 1f, 1.05f)
+        val coreBreathY = ObjectAnimator.ofFloat(voiceOrbCore, View.SCALE_Y, 1f, 1.05f)
+        coreBreath.duration = 1200; coreBreathY.duration = 1200
+        coreBreath.repeatCount = ValueAnimator.INFINITE
+        coreBreath.repeatMode = ValueAnimator.REVERSE
+        coreBreathY.repeatCount = ValueAnimator.INFINITE
+        coreBreathY.repeatMode = ValueAnimator.REVERSE
+
+        pulseSet = AnimatorSet().apply {
+            playTogether(
+                outerScaleX, outerScaleY, outerFade,
+                innerScaleX, innerScaleY, innerFade,
+                coreBreath, coreBreathY
+            )
+            start()
+        }
+    }
+
+    private fun stopPulse() {
+        pulseSet?.cancel()
+        pulseSet = null
+        if (::voiceHaloOuter.isInitialized) {
+            voiceHaloOuter.scaleX = 1f
+            voiceHaloOuter.scaleY = 1f
+            voiceHaloOuter.alpha = 1f
+            voiceHaloInner.scaleX = 1f
+            voiceHaloInner.scaleY = 1f
+            voiceHaloInner.alpha = 0.6f
+            voiceOrbCore.scaleX = 1f
+            voiceOrbCore.scaleY = 1f
+        }
+    }
+
+    private fun animateResultIn() {
+        if (!animatorsEnabled()) return
+        resultBox.alpha = 0f
+        resultBox.translationY = dp(10).toFloat()
+        resultBox.animate()
+            .alpha(1f)
+            .translationY(0f)
+            .setDuration(220)
+            .start()
+    }
+
+    private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
 }

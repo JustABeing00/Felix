@@ -1,8 +1,159 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Felix" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Theme.Felix" parent="Theme.Material3.Dark.NoActionBar">
+        <!-- Brand -->
         <item name="colorPrimary">@color/felix_accent</item>
+        <item name="colorOnPrimary">@color/felix_on_accent</item>
+        <item name="colorPrimaryContainer">@color/felix_accent_container</item>
+        <item name="colorOnPrimaryContainer">#DCE3FF</item>
+        <item name="colorSecondary">@color/felix_text_secondary</item>
+        <item name="colorOnSecondary">@color/felix_text_primary</item>
+        <item name="colorTertiary">@color/felix_success</item>
+
+        <!-- Surfaces -->
+        <item name="colorSurface">@color/felix_surface</item>
+        <item name="colorOnSurface">@color/felix_text_primary</item>
+        <item name="colorSurfaceVariant">@color/felix_surface_elevated</item>
+        <item name="colorOnSurfaceVariant">@color/felix_text_secondary</item>
+        <item name="colorSurfaceContainer">@color/felix_surface</item>
+        <item name="colorSurfaceContainerHigh">@color/felix_surface_elevated</item>
+        <item name="colorSurfaceContainerLow">@color/felix_surface_sunken</item>
+        <item name="colorOutline">@color/felix_border</item>
+        <item name="colorOutlineVariant">@color/felix_border_soft</item>
+
+        <!-- Status -->
+        <item name="colorError">@color/felix_error</item>
+        <item name="colorOnError">#1A0D10</item>
+        <item name="colorErrorContainer">@color/felix_error_container</item>
+        <item name="colorOnErrorContainer">@color/felix_error</item>
+
+        <!-- Chrome -->
         <item name="android:windowBackground">@color/felix_bg</item>
-        <item name="android:textColor">@color/felix_ink</item>
+        <item name="android:statusBarColor">@color/felix_bg</item>
+        <item name="android:navigationBarColor">@color/felix_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:textColor">@color/felix_text_primary</item>
+        <item name="android:textColorSecondary">@color/felix_text_secondary</item>
+
+        <!-- Dialogs -->
+        <item name="materialAlertDialogTheme">@style/Theme.Felix.Dialog</item>
+        <item name="alertDialogTheme">@style/Theme.Felix.Dialog</item>
+
+        <!-- Buttons -->
+        <item name="materialButtonStyle">@style/Widget.Felix.Button</item>
+        <item name="materialButtonOutlinedStyle">@style/Widget.Felix.Button.Secondary</item>
+
+        <!-- Inputs / switches -->
+        <item name="textInputStyle">@style/Widget.Felix.TextInputLayout</item>
+        <item name="switchStyle">@style/Widget.Felix.Switch</item>
+    </style>
+
+    <style name="Theme.Felix.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="colorSurface">@color/felix_surface_elevated</item>
+        <item name="colorOnSurface">@color/felix_text_primary</item>
+        <item name="colorPrimary">@color/felix_accent</item>
+        <item name="dialogCornerRadius">20dp</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.Felix.DialogButton</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Widget.Felix.DialogButton.Text</item>
+        <item name="buttonBarNeutralButtonStyle">@style/Widget.Felix.DialogButton.Text</item>
+        <item name="materialAlertDialogTitleTextStyle">@style/FelixDialogTitle</item>
+        <item name="materialAlertDialogBodyTextStyle">@style/FelixDialogBody</item>
+    </style>
+
+    <style name="FelixDialogTitle" parent="MaterialAlertDialog.Material3.Title.Text">
+        <item name="android:textColor">@color/felix_text_primary</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+
+    <style name="FelixDialogBody" parent="MaterialAlertDialog.Material3.Body.Text">
+        <item name="android:textColor">@color/felix_text_secondary</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:lineSpacingMultiplier">1.35</item>
+    </style>
+
+    <!-- Primary filled button: 56dp, 16dp radius, dark text on accent -->
+    <style name="Widget.Felix.Button" parent="Widget.Material3.Button">
+        <item name="android:minHeight">56dp</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="cornerRadius">16dp</item>
+        <item name="backgroundTint">@color/felix_accent</item>
+        <item name="android:textColor">@color/felix_on_accent</item>
+        <item name="iconTint">@color/felix_on_accent</item>
+        <item name="rippleColor">@color/felix_ripple</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <style name="Widget.Felix.Button.Secondary" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:minHeight">52dp</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="cornerRadius">16dp</item>
+        <item name="strokeColor">@color/felix_border</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="backgroundTint">@color/felix_surface_elevated</item>
+        <item name="android:textColor">@color/felix_text_primary</item>
+        <item name="iconTint">@color/felix_text_primary</item>
+        <item name="rippleColor">@color/felix_ripple</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <style name="Widget.Felix.Button.DangerOutline" parent="Widget.Felix.Button.Secondary">
+        <item name="android:textColor">@color/felix_error</item>
+        <item name="iconTint">@color/felix_error</item>
+        <item name="strokeColor">@color/felix_error_border</item>
+        <item name="backgroundTint">@color/felix_error_container</item>
+    </style>
+
+    <style name="Widget.Felix.Button.Choice" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:minHeight">52dp</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="cornerRadius">14dp</item>
+        <item name="strokeColor">@color/felix_border</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="backgroundTint">@color/felix_surface_elevated</item>
+        <item name="android:textColor">@color/felix_text_primary</item>
+        <item name="iconTint">@color/felix_accent</item>
+        <item name="rippleColor">@color/felix_ripple</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <style name="Widget.Felix.DialogButton" parent="Widget.Material3.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/felix_on_accent</item>
+        <item name="backgroundTint">@color/felix_accent</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <style name="Widget.Felix.DialogButton.Text" parent="Widget.Material3.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/felix_text_secondary</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <style name="Widget.Felix.TextInputLayout" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxBackgroundColor">@color/felix_surface_sunken</item>
+        <item name="boxStrokeColor">@color/felix_border</item>
+        <item name="hintTextColor">@color/felix_text_hint</item>
+        <item name="android:textColor">@color/felix_text_primary</item>
+        <item name="android:textColorHint">@color/felix_text_hint</item>
+    </style>
+
+    <style name="Widget.Felix.Switch" parent="Widget.Material3.CompoundButton.Switch">
+        <item name="android:textColor">@color/felix_text_primary</item>
+        <item name="trackTint">@color/felix_switch_track</item>
+        <item name="thumbTint">@color/felix_switch_thumb</item>
+    </style>
+
+    <style name="FelixSectionLabel" parent="android:Widget.TextView">
+        <item name="android:textSize">11sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.12</item>
+        <item name="android:textColor">@color/felix_text_hint</item>
     </style>
 </resources>

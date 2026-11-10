@@ -1,7 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="felix_bg">#070D1F</color>
-    <color name="felix_ink">#EEF2FF</color>
-    <color name="felix_muted">#9AA7CC</color>
-    <color name="felix_accent">#5B8CFF</color>
+    <!-- Core identity (legacy names kept for compatibility) -->
+    <color name="felix_bg">#080E1B</color>
+    <color name="felix_ink">#F4F6FC</color>
+    <color name="felix_muted">#A6B3C9</color>
+    <color name="felix_accent">#7890FF</color>
+
+    <!-- Surfaces -->
+    <color name="felix_surface">#101A2B</color>
+    <color name="felix_surface_elevated">#152238</color>
+    <color name="felix_surface_sunken">#0A1222</color>
+    <color name="felix_surface_voice">#0D1729</color>
+
+    <!-- Borders -->
+    <color name="felix_border">#25344C</color>
+    <color name="felix_border_soft">#1B2A45</color>
+    <color name="felix_border_strong">#33496E</color>
+
+    <!-- Accent system -->
+    <color name="felix_accent_soft">#1C2745</color>
+    <color name="felix_accent_container">#1A2440</color>
+    <color name="felix_accent_faint">#141F38</color>
+    <color name="felix_on_accent">#060B16</color>
+    <color name="felix_accent_pressed">#637BF2</color>
+    <color name="felix_accent_glow">#287890FF</color>
+    <color name="felix_accent_halo">#147890FF</color>
+
+    <!-- Text -->
+    <color name="felix_text_primary">#F4F6FC</color>
+    <color name="felix_text_secondary">#A6B3C9</color>
+    <color name="felix_text_hint">#7C8AA5</color>
+    <color name="felix_text_disabled">#5B6A86</color>
+
+    <!-- Status -->
+    <color name="felix_success">#56D6AD</color>
+    <color name="felix_success_container">#0F2E27</color>
+    <color name="felix_success_border">#1E4A3E</color>
+    <color name="felix_warning">#F0B86A</color>
+    <color name="felix_warning_container">#33270F</color>
+    <color name="felix_warning_border">#57411E</color>
+    <color name="felix_error">#F07B82</color>
+    <color name="felix_error_container">#351B21</color>
+    <color name="felix_error_border">#5C2A33</color>
+
+    <!-- Icon / launcher -->
+    <color name="ic_launcher_background">#0A1428</color>
+    <color name="ic_launcher_background_end">#060C18</color>
+
+    <!-- Ripple / scrim -->
+    <color name="felix_ripple">#1F7890FF</color>
+    <color name="felix_scrim">#99060B16</color>
 </resources>
