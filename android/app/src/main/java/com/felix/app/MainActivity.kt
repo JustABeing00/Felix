@@ -30,6 +30,8 @@ import androidx.core.content.ContextCompat
 class MainActivity : AppCompatActivity() {
 
     companion object {
+        /** How many recognizer guesses to consider: the top guess plus lower-ranked alternatives. */
+        private const val MAX_VOICE_RESULTS = 5
         private const val AUTO_CALL_ACKNOWLEDGEMENT =
             "When hands-free mode is on, Felix can start a phone call by itself after you say “Felix” " +
                 "and then a call command for a contact that matches exactly one saved number.\n\n" +
@@ -258,15 +260,17 @@ class MainActivity : AppCompatActivity() {
             override fun onResults(results: Bundle?) {
                 stopRecognizer()
                 setListeningUi(false)
-                val transcript = results
+                val transcripts = results
                     ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                    ?.firstOrNull()
                     .orEmpty()
-                if (transcript.isBlank()) {
+                    .map { it.trim() }
+                    .filter { it.isNotEmpty() }
+                    .take(MAX_VOICE_RESULTS)
+                if (transcripts.isEmpty()) {
                     setStatus("I didn't catch that. Try again.")
                     return
                 }
-                handleCommand(transcript)
+                handleVoiceCommand(transcripts)
             }
 
             override fun onPartialResults(partialResults: Bundle?) {}
@@ -275,7 +279,7 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-IN")
-            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, MAX_VOICE_RESULTS)
         }
         try {
             sr.startListening(intent)
@@ -310,47 +314,75 @@ class MainActivity : AppCompatActivity() {
     // ---------------- Command → contact → call ----------------
 
     private fun handleCommand(rawText: String) {
-        heardText.text = "I heard: “${rawText.trim()}”"
-        heardText.visibility = View.VISIBLE
-        when (val parsed = FelixLogic.parseCommand(rawText)) {
-            is ParseResult.Err -> setStatus(parsed.message)
-            is ParseResult.Ok -> when (val m = FelixLogic.matchContact(
+        val trimmed = rawText.trim()
+        when (val parsed = FelixLogic.parseCommand(trimmed)) {
+            is ParseResult.Err -> {
+                heardText.text = "I heard: “$trimmed”"
+                heardText.visibility = View.VISIBLE
+                setStatus(parsed.message)
+            }
+            is ParseResult.Ok -> presentMatch(
+                trimmed,
                 parsed.name,
-                contacts,
-                settings.preferredNumbers(),
-                settings.soundMatchingEnabled
-            )) {
-                is MatchResult.NotFound -> {
-                    setStatus("I couldn't find that contact.")
-                    showMessage(
-                        "No match for “${parsed.name}”.",
-                        "Check the name and try again."
-                    )
-                }
-                is MatchResult.Ambiguous -> {
-                    setStatus("Multiple contacts matched. Please choose one.")
-                    showResultTitle("Which “${parsed.name}” did you mean?")
-                    m.matches.forEach { c -> addChoiceButton(c.name) { resolveContact(c) } }
-                    showResultNote("I never guess when several contacts match.")
-                }
-                is MatchResult.NoNumber -> {
-                    setStatus("${m.contact.name} has no valid phone number.")
-                    showMessage(
-                        "${m.contact.name} has no usable number.",
-                        "Fix the number in your contacts and try again."
-                    )
-                }
-                is MatchResult.NeedChoice -> {
-                    setStatus("Found ${m.contact.name}${FelixLogic.heardNote(parsed.name, m.contact.name)}. Which number?")
-                    showResultTitle("Found ${m.contact.name}.")
-                    showResultNote("Pick one. Felix remembers your choice for this contact.")
-                    m.phones.forEach { p -> addChoiceButton(p) { rememberAndCall(m.contact, p) } }
-                }
-                is MatchResult.Found -> {
-                    val note = FelixLogic.heardNote(parsed.name, m.contact.name)
-                    setStatus("Found ${m.contact.name}$note.")
-                    requestCall(m.contact, m.phone)
-                }
+                FelixLogic.matchContact(
+                    parsed.name,
+                    contacts,
+                    settings.preferredNumbers(),
+                    settings.soundMatchingEnabled
+                )
+            )
+        }
+    }
+
+    /** Voice path: tries the recognizer's ranked guesses in order, acting on the first that matches. */
+    private fun handleVoiceCommand(transcripts: List<String>) {
+        val selected = FelixLogic.selectCommand(
+            transcripts,
+            contacts,
+            settings.preferredNumbers(),
+            settings.soundMatchingEnabled
+        )
+        if (selected == null) {
+            handleCommand(transcripts.first())
+            return
+        }
+        presentMatch(selected.transcript, selected.name, selected.match)
+    }
+
+    private fun presentMatch(spokenTranscript: String, parsedName: String, m: MatchResult) {
+        heardText.text = "I heard: “$spokenTranscript”"
+        heardText.visibility = View.VISIBLE
+        when (m) {
+            is MatchResult.NotFound -> {
+                setStatus("I couldn't find that contact.")
+                showMessage(
+                    "No match for “${parsedName}”.",
+                    "Check the name and try again."
+                )
+            }
+            is MatchResult.Ambiguous -> {
+                setStatus("Multiple contacts matched. Please choose one.")
+                showResultTitle("Which “${parsedName}” did you mean?")
+                m.matches.forEach { c -> addChoiceButton(c.name) { resolveContact(c) } }
+                showResultNote("I never guess when several contacts match.")
+            }
+            is MatchResult.NoNumber -> {
+                setStatus("${m.contact.name} has no valid phone number.")
+                showMessage(
+                    "${m.contact.name} has no usable number.",
+                    "Fix the number in your contacts and try again."
+                )
+            }
+            is MatchResult.NeedChoice -> {
+                setStatus("Found ${m.contact.name}${FelixLogic.heardNote(parsedName, m.contact.name)}. Which number?")
+                showResultTitle("Found ${m.contact.name}.")
+                showResultNote("Pick one. Felix remembers your choice for this contact.")
+                m.phones.forEach { p -> addChoiceButton(p) { rememberAndCall(m.contact, p) } }
+            }
+            is MatchResult.Found -> {
+                val note = FelixLogic.heardNote(parsedName, m.contact.name)
+                setStatus("Found ${m.contact.name}$note.")
+                requestCall(m.contact, m.phone)
             }
         }
     }

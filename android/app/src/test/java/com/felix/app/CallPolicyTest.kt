@@ -96,8 +96,9 @@ class CallPolicyTest {
         preferred: Map<String, String> = emptyMap(),
         autoCall: Boolean = true,
         callGranted: Boolean = true,
-        sound: Boolean = true
-    ) = DispatchRequest(text, wakeId, contacts, contactsGranted, preferred, autoCall, callGranted, sound)
+        sound: Boolean = true,
+        alternatives: List<String> = emptyList()
+    ) = DispatchRequest(text, wakeId, contacts, contactsGranted, preferred, autoCall, callGranted, sound, alternatives)
 
     @Test fun dispatchPlacesExactlyOneCallForAValidCommand() {
         val executor = FakeExecutor()
@@ -180,6 +181,43 @@ class CallPolicyTest {
         val executor = FakeExecutor()
         val result = CommandDispatcher(executor).dispatch(request("Call Yesh", sound = false))
         assertTrue(result is DispatchResult.Blocked)
+        assertTrue(executor.placed.isEmpty())
+    }
+
+    @Test fun secondRecognizerGuessThatMatchesPlacesTheCall() {
+        val anki = FelixContact("a", "Anki", listOf("+911111111111"))
+        val executor = FakeExecutor()
+        val result = CommandDispatcher(executor).dispatch(
+            request("Call Ankit", contacts = listOf(anki, yash), alternatives = listOf("Call Anki"))
+        )
+        assertEquals(DispatchResult.CallRequested(anki, "+911111111111", "Anki"), result)
+        assertEquals(listOf("+911111111111"), executor.placed)
+    }
+
+    @Test fun topGuessMatchStillBeatsLowerGuesses() {
+        val executor = FakeExecutor()
+        val result = CommandDispatcher(executor).dispatch(
+            request("Call Yash", alternatives = listOf("Call Dad"))
+        )
+        assertEquals(DispatchResult.CallRequested(yash, "+911234567890", "Yash"), result)
+        assertEquals(listOf("+911234567890"), executor.placed)
+    }
+
+    @Test fun parseableAlternativeWorksWhenTopGuessIsNotACommand() {
+        val executor = FakeExecutor()
+        val result = CommandDispatcher(executor).dispatch(
+            request("Play some music", alternatives = listOf("Call Yash"))
+        )
+        assertEquals(DispatchResult.CallRequested(yash, "+911234567890", "Yash"), result)
+        assertEquals(listOf("+911234567890"), executor.placed)
+    }
+
+    @Test fun unparseableGuessesAreNotACommand() {
+        val executor = FakeExecutor()
+        val result = CommandDispatcher(executor).dispatch(
+            request("Play some music", alternatives = listOf("La la la"))
+        )
+        assertTrue(result is DispatchResult.NotACommand)
         assertTrue(executor.placed.isEmpty())
     }
 }

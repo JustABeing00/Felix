@@ -225,4 +225,61 @@ class FelixLogicTest {
     @Test fun heardNoteQuotesWhatWasHeard() {
         assertEquals(" (heard “satwinder kumar”)", FelixLogic.heardNote("satwinder kumar", "Satvinder Kumar"))
     }
+
+    // ---------------- Recognizer n-best list ----------------
+
+    private val ankiList = listOf(
+        FelixContact("a", "Anki", listOf("+911111111111")),
+        FelixContact("b", "Yash", listOf("+912222222222"))
+    )
+
+    @Test fun secondGuessThatMatchesWinsOverATopGuessMiss() {
+        val selected = FelixLogic.selectCommand(listOf("Call Ankit", "Call Anki"), ankiList)
+        assertEquals("Call Anki", selected?.transcript)
+        assertEquals("Anki", selected?.name)
+        assertEquals("Anki", (selected?.match as? MatchResult.Found)?.contact?.name)
+    }
+
+    @Test fun firstCallableGuessWinsInRankOrder() {
+        val selected = FelixLogic.selectCommand(listOf("Call Yash", "Call Anki"), ankiList)
+        assertEquals("Call Yash", selected?.transcript)
+        assertEquals("Yash", (selected?.match as? MatchResult.Found)?.contact?.name)
+    }
+
+    @Test fun aMatchBeatsAmbiguityFromAHigherRankedGuess() {
+        val rahuls = listOf(
+            FelixContact("r1", "Rahul Sharma", listOf("+912222222222")),
+            FelixContact("r2", "Rahul Verma", listOf("+913333333333"))
+        )
+        val selected = FelixLogic.selectCommand(listOf("Call Rahul", "Call Rahul Sharma"), rahuls)
+        assertEquals("Call Rahul Sharma", selected?.transcript)
+        assertEquals("Rahul Sharma", (selected?.match as? MatchResult.Found)?.contact?.name)
+    }
+
+    @Test fun decisiveNonMatchIsKeptWhenNothingResolvesToACall() {
+        val rahuls = listOf(
+            FelixContact("r1", "Rahul Sharma", listOf("+912222222222")),
+            FelixContact("r2", "Rahul Verma", listOf("+913333333333"))
+        )
+        val selected = FelixLogic.selectCommand(listOf("Call Rahul", "Call Nobody"), rahuls)
+        assertEquals("Call Rahul", selected?.transcript)
+        assertTrue(selected?.match is MatchResult.Ambiguous)
+    }
+
+    @Test fun topGuessNamesTheNotFoundWhenNothingMatches() {
+        val selected = FelixLogic.selectCommand(listOf("Call Nobody", "Call Stranger"), ankiList)
+        assertEquals("Call Nobody", selected?.transcript)
+        assertEquals("Nobody", (selected?.match as? MatchResult.NotFound)?.query)
+    }
+
+    @Test fun unparseableGuessesReturnNull() {
+        assertNull(FelixLogic.selectCommand(listOf("hello there", "   "), ankiList))
+        assertNull(FelixLogic.selectCommand(emptyList(), ankiList))
+    }
+
+    @Test fun blankAndDuplicateGuessesAreSkipped() {
+        val selected = FelixLogic.selectCommand(listOf("  ", "Call Yash", "Call Yash"), ankiList)
+        assertEquals("Call Yash", selected?.transcript)
+        assertEquals("Yash", (selected?.match as? MatchResult.Found)?.contact?.name)
+    }
 }

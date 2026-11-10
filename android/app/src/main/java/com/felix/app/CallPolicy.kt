@@ -82,7 +82,9 @@ data class DispatchRequest(
     val preferredNumbers: Map<String, String>,
     val autoCallEnabled: Boolean,
     val callPermissionGranted: Boolean,
-    val soundMatching: Boolean = true
+    val soundMatching: Boolean = true,
+    /** Lower-ranked recognizer guesses, tried in order when the top guess matches nothing. */
+    val alternatives: List<String> = emptyList()
 )
 
 sealed interface DispatchResult {
@@ -106,16 +108,22 @@ class CommandDispatcher(private val executor: CallExecutor) {
     private val attemptedWakeIds = HashSet<Long>()
 
     fun dispatch(request: DispatchRequest): DispatchResult {
-        val parsed = FelixLogic.parseCommand(request.commandText)
-        if (parsed !is ParseResult.Ok) {
-            return DispatchResult.NotACommand((parsed as ParseResult.Err).message)
-        }
+        val topParsed = FelixLogic.parseCommand(request.commandText)
+        val selected = FelixLogic.selectCommand(
+            listOf(request.commandText) + request.alternatives,
+            request.contacts,
+            request.preferredNumbers,
+            request.soundMatching
+        ) ?: return DispatchResult.NotACommand(
+            (topParsed as? ParseResult.Err)?.message ?: "I didn't catch that."
+        )
         if (!request.contactsPermissionGranted) {
-            return DispatchResult.Blocked(BlockReason.CONTACTS_PERMISSION_MISSING, parsed.name, null, null)
+            return DispatchResult.Blocked(BlockReason.CONTACTS_PERMISSION_MISSING, selected.name, null, null)
         }
         val wakeId = request.wakeEventId
         val priorAttempts = if (wakeId != null && wakeId in attemptedWakeIds) 1 else 0
-        val match = FelixLogic.matchContact(parsed.name, request.contacts, request.preferredNumbers, request.soundMatching)
+        val match = selected.match
+        val parsed = selected.name
         val input = CallPolicy.Input(
             wakeEventId = wakeId,
             commandComplete = true,
@@ -126,12 +134,12 @@ class CommandDispatcher(private val executor: CallExecutor) {
         )
         return when (val decision = CallPolicy.decide(input)) {
             is CallDecision.Blocked ->
-                DispatchResult.Blocked(decision.reason, parsed.name, decision.contact, decision.phone)
+                DispatchResult.Blocked(decision.reason, parsed, decision.contact, decision.phone)
             is CallDecision.Call -> {
                 if (wakeId != null) attemptedWakeIds += wakeId
                 when (val outcome = executor.placeCall(decision.phone)) {
-                    CallOutcome.Sent -> DispatchResult.CallRequested(decision.contact, decision.phone, parsed.name)
-                    else -> DispatchResult.CallFailed(decision.contact, decision.phone, outcome, parsed.name)
+                    CallOutcome.Sent -> DispatchResult.CallRequested(decision.contact, decision.phone, parsed)
+                    else -> DispatchResult.CallFailed(decision.contact, decision.phone, outcome, parsed)
                 }
             }
         }

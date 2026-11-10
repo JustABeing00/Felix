@@ -50,6 +50,8 @@ class FelixListeningService : Service() {
         private const val CUE_DELAY_MS = 450L
         private const val COMMAND_TIMEOUT_MS = 10_000L
         private const val COOLDOWN_MS = 2_000L
+        /** How many recognizer guesses to consider: the top guess plus lower-ranked alternatives. */
+        private const val MAX_COMMAND_RESULTS = 5
 
         fun startIntent(context: Context): Intent =
             Intent(context, FelixListeningService::class.java).setAction(ACTION_START)
@@ -301,11 +303,13 @@ class FelixListeningService : Service() {
             override fun onError(error: Int) = onCommandError(id, error)
 
             override fun onResults(results: Bundle?) {
-                val transcript = results
+                val transcripts = results
                     ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                    ?.firstOrNull()
                     .orEmpty()
-                onCommandResult(id, transcript)
+                    .map { it.trim() }
+                    .filter { it.isNotEmpty() }
+                    .take(MAX_COMMAND_RESULTS)
+                onCommandResult(id, transcripts)
             }
 
             override fun onPartialResults(partialResults: Bundle?) {}
@@ -314,7 +318,7 @@ class FelixListeningService : Service() {
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-IN")
-            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, MAX_COMMAND_RESULTS)
         }
         val timeout = Runnable { onCommandTimeout(id) }
         commandTimeout = timeout
@@ -326,17 +330,16 @@ class FelixListeningService : Service() {
         }
     }
 
-    private fun onCommandResult(id: Long, transcript: String) {
+    private fun onCommandResult(id: Long, transcripts: List<String>) {
         if (!claimCommand(id)) return
-        val heard = transcript.trim()
-        if (heard.isEmpty()) {
+        if (transcripts.isEmpty()) {
             finishCycle("I didn't catch that.")
             return
         }
-        report(HandsFreePhase.RESOLVING_CONTACT, "Heard “$heard”. Resolving contact…")
+        report(HandsFreePhase.RESOLVING_CONTACT, "Heard “${transcripts.first()}”. Resolving contact…")
         decideExecutor.execute {
             val result = try {
-                decide(id, heard)
+                decide(id, transcripts)
             } catch (e: Exception) {
                 DispatchResult.NotACommand("Felix couldn't read your contacts right now. Nothing was called.")
             }
@@ -393,12 +396,13 @@ class FelixListeningService : Service() {
     }
 
     /** Runs on the decide thread: contacts from the phone plus the saved preferences. */
-    private fun decide(wakeId: Long, heard: String): DispatchResult {
+    private fun decide(wakeId: Long, transcripts: List<String>): DispatchResult {
         val settings = FelixSettings(applicationContext)
         val contactsGranted = ContactsRepository.hasPermission(applicationContext)
         val contacts = if (contactsGranted) ContactsRepository.load(applicationContext) else emptyList()
         val request = DispatchRequest(
-            commandText = heard,
+            commandText = transcripts.first(),
+            alternatives = transcripts.drop(1),
             wakeEventId = wakeId,
             contacts = contacts,
             contactsPermissionGranted = contactsGranted,

@@ -164,4 +164,50 @@ object FelixLogic {
         if (phones.size == 1) return MatchResult.Found(contact, phones[0], bySound)
         return MatchResult.NeedChoice(contact, phones)
     }
+
+    /** The winning alternative from the recognizer's n-best list. */
+    data class SelectedCommand(
+        /** The transcript Felix acted on, in the recognizer's rank order. */
+        val transcript: String,
+        /** The contact name parsed from that transcript. */
+        val name: String,
+        val match: MatchResult
+    )
+
+    /**
+     * Picks the winning alternative from the recognizer's n-best list
+     * (top guess first). Pass 1 returns the first alternative that resolves
+     * to a callable match; pass 2 returns the first alternative that resolves
+     * to anything decisive (ambiguous, needs-choice, no-number) so a
+     * near-miss still asks instead of dying silently. Every returned match is
+     * still a deterministic match of an actual transcript against a real
+     * contact — rank order decides, nothing is guessed.
+     * Returns null when no alternative parses as a call command.
+     */
+    fun selectCommand(
+        transcripts: List<String>,
+        contacts: List<FelixContact>,
+        preferredNumbers: Map<String, String> = emptyMap(),
+        soundMatching: Boolean = true
+    ): SelectedCommand? {
+        val candidates = transcripts
+            .map { normalizeWhitespace(it) }
+            .filter { it.isNotEmpty() }
+            .distinct()
+            .mapNotNull { transcript ->
+                val parsed = parseCommand(transcript)
+                if (parsed is ParseResult.Ok) transcript to parsed.name else null
+            }
+        if (candidates.isEmpty()) return null
+        for ((transcript, name) in candidates) {
+            val match = matchContact(name, contacts, preferredNumbers, soundMatching)
+            if (match is MatchResult.Found) return SelectedCommand(transcript, name, match)
+        }
+        for ((transcript, name) in candidates) {
+            val match = matchContact(name, contacts, preferredNumbers, soundMatching)
+            if (match !is MatchResult.NotFound) return SelectedCommand(transcript, name, match)
+        }
+        val (transcript, name) = candidates.first()
+        return SelectedCommand(transcript, name, MatchResult.NotFound(name))
+    }
 }

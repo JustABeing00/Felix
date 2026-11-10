@@ -178,25 +178,34 @@
 
   // ---------- Command handling (shared by voice + typed input) ----------
 
-  function handleCommandText(rawText) {
+  // Accepts one command string (typed input) or the recognizer's ranked
+  // guesses (voice input). With several guesses, Felix acts on the first
+  // one that matches a contact — rank order decides, nothing is guessed.
+  function handleCommandText(rawInput) {
     clearResult();
-    if (!rawText || String(rawText).trim() === "") {
+    const inputs = (Array.isArray(rawInput) ? rawInput : [rawInput])
+      .map((s) => String(s || "").trim())
+      .filter((s) => s !== "");
+    if (inputs.length === 0) {
       setStatus("I didn't catch a command. Try “Call Yash”.");
       return;
     }
-    setHeard("I heard: “" + String(rawText).trim() + "”");
-
-    const parsed = L.parseCommand(rawText);
-    if (!parsed.ok) {
-      setStatus(parsed.message);
+    const selected = L.selectCommand(inputs, contacts);
+    if (!selected) {
+      setHeard("I heard: “" + inputs[0] + "”");
+      const parsed = L.parseCommand(inputs[0]);
+      setStatus(parsed.ok ? "I only understand call commands yet. Try “Call Yash”." : parsed.message);
       return;
     }
+    setHeard("I heard: “" + selected.transcript + "”");
+
+    const parsed = { ok: true, name: selected.name };
     if (contacts.length === 0) {
       setStatus("No contacts configured yet. Add a contact below first.");
       return;
     }
 
-    const m = L.matchContact(parsed.name, contacts);
+    const m = selected.match;
 
     if (m.status === "not-found") {
       setStatus("I couldn't find that contact.");
@@ -385,23 +394,28 @@
 
     recognition.lang = "en-IN";
     recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
+    recognition.maxAlternatives = 5;
     recognition.continuous = false;
 
     let gotResult = false;
 
     recognition.onresult = (event) => {
       gotResult = true;
-      let transcript = "";
+      let transcripts = [];
       try {
-        transcript = event.results[0][0].transcript || "";
-      } catch (e) { transcript = ""; }
+        const top = event.results[0] || [];
+        for (let i = 0; i < top.length; i++) {
+          if (top[i] && typeof top[i].transcript === "string" && top[i].transcript.trim() !== "") {
+            transcripts.push(top[i].transcript);
+          }
+        }
+      } catch (e) { transcripts = []; }
       stopRec();
-      if (!transcript.trim()) {
+      if (transcripts.length === 0) {
         setStatus("I didn't catch that. Try again.");
         return;
       }
-      handleCommandText(transcript);
+      handleCommandText(transcripts);
     };
 
     recognition.onerror = (event) => {

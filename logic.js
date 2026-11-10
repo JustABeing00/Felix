@@ -192,7 +192,46 @@ const FelixLogic = {
   buildTelUrl,
   createContact,
   matchContact,
+  selectCommand,
 };
+
+/**
+ * Picks the winning alternative from the recognizer's n-best list
+ * (top guess first). Pass 1 returns the first alternative that resolves
+ * to a callable match; pass 2 returns the first alternative that resolves
+ * to anything decisive (ambiguous, needs-choice, no-number) so a
+ * near-miss still asks instead of dying silently. Every returned match is
+ * still a deterministic match of an actual transcript against a real
+ * contact — rank order decides, nothing is guessed.
+ * Returns null when no alternative parses as a call command.
+ * @param {unknown} transcripts
+ * @param {Array} contacts
+ * @returns {{transcript:string, name:string, match:Object} | null}
+ */
+function selectCommand(transcripts, contacts) {
+  const list = Array.isArray(transcripts) ? transcripts : [transcripts];
+  const seen = new Set();
+  const candidates = [];
+  for (const raw of list) {
+    const transcript = normalizeWhitespace(String(raw || ""));
+    const key = transcript.toLowerCase();
+    if (!transcript || seen.has(key)) continue;
+    seen.add(key);
+    const parsed = parseCommand(transcript);
+    if (parsed.ok) candidates.push({ transcript, name: parsed.name });
+  }
+  if (candidates.length === 0) return null;
+  for (const c of candidates) {
+    const match = matchContact(c.name, contacts);
+    if (match.status === "found") return { transcript: c.transcript, name: c.name, match };
+  }
+  for (const c of candidates) {
+    const match = matchContact(c.name, contacts);
+    if (match.status !== "not-found") return { transcript: c.transcript, name: c.name, match };
+  }
+  const first = candidates[0];
+  return { transcript: first.transcript, name: first.name, match: { status: "not-found", query: first.name } };
+}
 
 if (typeof module !== "undefined" && module.exports) {
   module.exports = FelixLogic;

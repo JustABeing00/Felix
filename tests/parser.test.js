@@ -118,3 +118,35 @@ describe("matchContact", () => {
     assert.equal(m.phones.length, 2);
   });
 });
+
+describe("selectCommand", () => {
+  const list = [
+    L.createContact("Anki", ["+911111111111"]),
+    L.createContact("Yash", ["+912222222222"]),
+  ];
+
+  test("second guess that matches wins over a top-guess miss", () => {
+    const sel = L.selectCommand(["Call Ankit", "Call Anki"], list);
+    assert.equal(sel.transcript, "Call Anki");
+    assert.equal(sel.name, "Anki");
+    assert.equal(sel.match.status, "found");
+    assert.equal(sel.match.contact.name, "Anki");
+  });
+
+  test("first callable guess wins in rank order", () => {
+    const sel = L.selectCommand(["Call Yash", "Call Anki"], list);
+    assert.equal(sel.transcript, "Call Yash");
+    assert.equal(sel.match.contact.name, "Yash");
+  });
+
+  test("unparseable guesses return null", () => {
+    assert.equal(L.selectCommand(["hello there", "   "], list), null);
+    assert.equal(L.selectCommand([], list), null);
+  });
+
+  test("top guess names the not-found when nothing matches", () => {
+    const sel = L.selectCommand(["Call Nobody", "Call Stranger"], list);
+    assert.equal(sel.transcript, "Call Nobody");
+    assert.equal(sel.match.status, "not-found");
+  });
+});
