@@ -14,12 +14,13 @@ No accounts, no backend, no tracking. Two ways to use it:
 ### Option A — Android app (GitHub Releases)
 
 1. Go to [**Releases**](https://github.com/JustABeing00/Felix/releases).
-2. Download the latest APK (e.g. `felix-v0.3.0.apk`, ~85 MB — size is the offline voice model).
+2. Download the latest APK (e.g. `felix-v0.4.0.apk`, ~85 MB — size is the offline voice model).
 3. Copy it to your phone (USB, Drive, or download directly on the phone).
 4. Tap the APK → **Install**. If prompted, allow **Install unknown apps** for your browser/file manager.
 5. Open **Felix** and grant **Microphone** and **Contacts** when asked. Grant **Phone** only if you turn on automatic calling (see below).
 
 Updates work the same way: download the newer APK from Releases and install it over the old one. Felix is sideload-only and is not on the Play Store.
+Release APKs are signed with the developer's personal release key, so updates install seamlessly. (If you still have a pre-0.4.0 debug build installed, uninstall it first — one time only — then install the release.)
 
 Requirements: **Android 8.0+**. No Google account, API key, or sign-in needed.
 
@@ -123,11 +124,15 @@ The offline speech model (~54 MB unpacked) is excluded from git. Restore it once
 Then build (Windows example from `android/`):
 
 ```powershell
-.\build-windows.ps1                 # unit tests + debug APK
-.\build-windows.ps1 lintDebug       # Android Lint
+.\build-windows.ps1 testDebugUnitTest, assembleRelease   # unit tests + release APK
+.\build-windows.ps1 lintDebug                            # Android Lint
 ```
 
-The APK lands at `android/app/build/outputs/apk/debug/app-debug.apk`. On other systems use `./gradlew testDebugUnitTest assembleDebug` with JDK 17 and Android SDK 34. Last run: 80 Android unit tests, 0 failures; Lint clean.
+The release APK lands at `android/app/build/outputs/apk/release/app-release.apk`.
+Release builds are signed with a personal key read from `android/keystore.properties`
+(gitignored, never committed — see the Android README for setup and backup).
+On other systems use `./gradlew testDebugUnitTest assembleRelease` with JDK 17 and
+Android SDK 34. Last run: 91 Android unit tests, 0 failures; Lint clean.
 
 APKs and the model folder are gitignored (`android/.gitignore`) — release APKs are published manually under **Releases**, not committed.
 
@@ -166,4 +171,4 @@ Include: app version (from Releases) or website URL, Android version + device mo
 
 ## Versioning
 
-Versions follow `versionName` in `android/app/build.gradle` (current: `0.3.0`, `versionCode` 3). Each GitHub Release publishes the matching APK built from that tag.
+Versions follow `versionName` in `android/app/build.gradle` (current: `0.4.0`, `versionCode` 4). Each GitHub Release publishes the matching release-signed APK built from that tag.

@@ -4,7 +4,7 @@ The native Felix app. Sideload the APK from
 [**Releases**](https://github.com/JustABeing00/Felix/releases) — no Play Store,
 no account, no API key.
 
-Requirements: **Android 8.0+** (minSdk 26). Current version: `0.3.0`.
+Requirements: **Android 8.0+** (minSdk 26). Current version: `0.4.0`.
 
 Two ways to use it:
 
@@ -21,7 +21,7 @@ Both use the same safety rules. Ambiguous names are never guessed, numbers are n
 | Say "Felix", pause, beep, then "Call Priya" | Built — verify on your device (see test guide) |
 | Wake word works offline with the screen off | Built — verify on your device |
 | Automatic call after the command, once you enable it | Built — verify on your device |
-| Unit tests (parser, matching, sound-alikes, call policy, wake-word rules, cleanup) | **Passing: 80 of 80** |
+| Unit tests (parser, matching, sound-alikes, call policy, wake-word rules, cleanup) | **Passing: 91 of 91** |
 | Compiles, packages and passes Android Lint with no errors | **Yes** |
 
 Hands-free is experimental: the decision logic is fully unit-tested, but microphone behaviour, lock-screen behaviour, and vendor battery management vary by phone, so treat the test guide below as required reading on a new device.
@@ -52,9 +52,10 @@ Porcupine (Picovoice) was the planned wake-word engine. Its free tier is discont
 
 ## Install
 
-1. Download the latest APK from [**Releases**](https://github.com/JustABeing00/Felix/releases) (e.g. `felix-v0.3.0.apk`, ~85 MB — most of it is the offline voice model).
+1. Download the latest APK from [**Releases**](https://github.com/JustABeing00/Felix/releases) (e.g. `felix-v0.4.0.apk`, ~85 MB — most of it is the offline voice model).
 2. Copy it to your phone (USB, Drive, or download directly on the phone).
 3. Tap it → **Install**. If prompted, allow **Install unknown apps** for your browser/file manager. Installing a newer release over an older one updates in place; no uninstall needed.
+   (Coming from a pre-0.4.0 debug build? Uninstall it first — one time only — then install the release. Different signature.)
 4. Open Felix. Allow **Microphone** and **Contacts** when asked. Allow **Phone** only if you turn on automatic calling.
 
 ### Permissions, and why each is needed
@@ -132,6 +133,26 @@ Use a contact whose number you control, such as your own second SIM or a friend 
 
 No API key, no account and no `local.properties` entry is needed.
 
+### 1b. Release signing key (one-time setup, required for release builds)
+
+Release APKs are signed with a personal key so updates install seamlessly forever.
+Debug builds keep working without any of this.
+
+1. Generate the key **outside the repo** (example):
+   `keytool -genkeypair -keystore D:\felix-keys\felix-release.jks -alias felix -keyalg RSA -keysize 2048 -validity 10950`
+2. Back up the `.jks` file **and both passwords in at least two places**
+   (e.g. a USB stick + your password manager). Losing the key means the app can
+   never be updated again under the same package name — this file is irreplaceable.
+3. Create `android/keystore.properties` (gitignored, never commit it):
+   ```
+   storeFile=D:/felix-keys/felix-release.jks
+   storePassword=<store password>
+   keyAlias=felix
+   keyPassword=<key password>
+   ```
+   `app/build.gradle` reads it for `signingConfigs.release` and refuses to build
+   a release without it.
+
 ### 2. Build
 
 Standard build with the wrapper (works on Windows, macOS, Linux):
@@ -182,7 +203,7 @@ android/
 ./gradlew testDebugUnitTest
 ```
 
-Results land in `app/build/test-results/testDebugUnitTest/`. Last run: 80 tests, 0 failures.
+Results land in `app/build/test-results/testDebugUnitTest/`. Last run: 91 tests, 0 failures.
 
 ## Troubleshooting
 

@@ -11,13 +11,31 @@ android {
         applicationId = "com.felix.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 3
-        versionName = "0.3.0"
+        versionCode = 4
+        versionName = "0.4.0"
+    }
+
+    signingConfigs {
+        release {
+            def props = new Properties()
+            def propsFile = rootProject.file("keystore.properties")
+            if (!propsFile.exists()) {
+                throw new GradleException(
+                    "Release signing needs android/keystore.properties (see android README, " +
+                    "'Build from source'). It is gitignored: never commit it.")
+            }
+            props.load(new FileInputStream(propsFile))
+            storeFile = file(props.getProperty("storeFile"))
+            storePassword = props.getProperty("storePassword")
+            keyAlias = props.getProperty("keyAlias")
+            keyPassword = props.getProperty("keyPassword")
+        }
     }
 
     buildTypes {
         release {
             minifyEnabled false
+            signingConfig signingConfigs.release
         }
     }
     compileOptions {
